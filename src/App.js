@@ -58,7 +58,6 @@ border:"1.8px solid #333333",
 "backgroundColor": "#111827",
 "color": "#fff"
 };
-
 const themeset =( x)=>{
   if (x===false )
   {
