@@ -1,9 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import './App.css';
-import {db} from "./Firebase";
-import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
 import  dbk  from './hero-pattern-dark.webp';
 import  lbk  from './hero-pattern.webp';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
