@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import './App.css';
-// import useLocalStorage from 'use-local-storage';
 import {db} from "./Firebase";
 import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
@@ -8,11 +7,12 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import  dbk  from './hero-pattern-dark.webp';
 import  lbk  from './hero-pattern.webp';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import axios from 'axios';
 
 import LightModeIcon from '@mui/icons-material/LightMode';
 function App() {
   const [user, setuser] =useState("");
-  let time=Date().toLocaleString();
+  const [currentUser,setcurrentUser]=useState("");
   const [message, setmessage] =useState("done!");
   const defaultDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const empty={color:"rgb(15, 23, 42)"};
@@ -20,11 +20,10 @@ function App() {
   const  vertical="bottom";
   const horizontal= "center";
 
-
-  const [l, setl] =useState(0);
-  const [t, sett] =useState(0);
   const [links, setlinks] =useState({});
-  // const [texts, settexts] =useState({});
+
+
+
 
 
 
@@ -85,7 +84,6 @@ useEffect(()=> {themeset(defaultDark);settoggle(defaultDark)},[]);
 
 
 
-////////////////////////create boxxes
 
 function linkchange(key , e){
   let temp={...links}
@@ -94,85 +92,71 @@ function linkchange(key , e){
 
 }
 
-// function textchange(key , e){
-//   let temp={...texts}
-//   temp[key]=e.target.value
-//   settexts(temp);
-
-// }
-
-////////////////////////////
+useEffect(() => {
+  console.log('useEffect ran. lonks is: ', links);
+}, [links]);
 
 
-
-
-
-
-
+useEffect(() => {
+  console.log('useEffect ran. userkey is: ', user);
+}, [user]);
 /////////////////////data fetch //////////////
-function getlinks(){
+
+function isEmpty(ob){
+  for(var i in ob){ return false;}
+ return true;
+}
+
+const getdata = async () => {
+  try {
+    const sendData={
+      "type":"get",
+      "key":user
+  }
+    let response = await axios({'method':'POST',
+    'url':"https://c13xazudu6.execute-api.us-east-1.amazonaws.com/settext",
+    'data':sendData,
+    })
+    response=await response.data.data;
+    return response;
+  }
+  catch (e) {
+    return {};
+  }
+}
+
+async function getlinks(){
+  
   if(user==""){
     return
   }
   let data;
-  setl(0);
-  sett(0);
+  setcurrentUser(user);
   setlinks({});
-  // settexts({});
-  
-      db.collection("user-data").doc(user).get().then((doc) => {
-        if (doc.exists) {
-            data= doc.data();
-            setl(data['L']);
-            sett(data['T']); 
-            setlinks(data) 
+  data = await getdata();
+  console.log("first")
+  console.log(data);
+  if(isEmpty(data)){
+    setmessage(" error ocured try again check internet connectivity") ;
 
-            // for(let x=1;x<=data['L'];x++){
-            //   const temp="link"+x;
-            //   setlinks(links => ({...links,[temp]:data[temp]}))
-            // } 
-            // for(let x=1;x<=data['T'];x++){
-            //   const temp="text"+x;
-            //   settexts(texts => ({...texts,[temp]:data[temp]}))
-            // } 
-            
-
-            setmessage(" fetching data !!!") ;
-            setOpen(true);
-          
-        } else {
-          const obj={
-            L:3,
-            T:2,
-            link1:"",
-            link2:"",
-            link3:"",
-            text1:"",
-            text2:""
-          };
-          db.collection("user-data").doc(user).set(obj);
-          data=obj;
-          setl(data['L']);
-          sett(data['T']);  
-          setlinks({ link1:"",
-          link2:"",
-          link3:"",
-          text1:"",
-          text2:""});
-          
-
-          setmessage("  new key created !!!") ;
-          setOpen(true);
-        }
-    }).catch((error) => {
-    });
-  
-  handletrash();
+    setOpen(true);
+  }
+  else{
+    if(data.created==0){
+      setlinks(data);
+      setmessage(" fetching data !!!") ;
+      setOpen(true);
+    }
+    else{
+      setlinks(data);
+    setmessage("  key created !!!") ;
+    setOpen(true);
+    }
     
-  
+  }
+ 
   
     }
-/////////////////////////////////get links
 
 
 
@@ -185,6 +169,7 @@ const handleClose = (event, reason) => {
   setOpen(false);
 };
 
+
 const keychange=(e)=> {
   if (e.key === 'Enter') {
     getlinks()
@@ -192,25 +177,31 @@ const keychange=(e)=> {
 
 }
 
+// writing data
 
+const setdata = async () => {
+  try {
+    const sendData={...links};
+    sendData["type"]="POST";
+    sendData["user"]=currentUser;
+    console.log(sendData)
+    let response = await axios({'method':'POST',
+    'url':"https://c13xazudu6.execute-api.us-east-1.amazonaws.com/settext",
+    'data':sendData,
+    });
+    console.log(response)
+    return response;
+  }
+  catch (e) {
+    return {};
+  }
+}
 
 function linkupdate(key){
-  db.collection("user-data").doc(user).update({
-    [key] : links[key]
-   
-});
-
-time=Date().toLocaleString();
-let pp={ [time]:links[key]};
-db.collection("trash").doc(user).get().then((doc) => {
-  if (doc.exists) {
-    db.collection("trash").doc(user).update(pp);
+  if(user==""){
+    return ;
   }
-  else{
-    db.collection("trash").doc(user).set(pp);
-  }
-});
-
+setdata()
 
 }
 
@@ -224,73 +215,6 @@ const saveHit=(key,e)=>{
 
 };
 
-// function textupdate(key){
-//   db.collection("user-data").doc(user).update({
-//     [key] : links[key]
-   
-// });
-
-// }
-//////////////////////////////////////////////////
-const addlink=(LorT)=>{
-  let temp;
-  if (LorT==0){
-    temp="link"+(l+1);
-    db.collection("user-data").doc(user).update({"L" : (l+1)});
-    setl(l+1);
-  }
-  if (LorT==1){
-    temp="text"+(t+1);
-    db.collection("user-data").doc(user).update({"T" : (t+1)});
-    sett(t+1);
-  }
- 
-db.collection("user-data").doc(user).update({
-  [temp] : ""
- 
-});
-
-  
-  setlinks(links => ({...links,[temp]:""}))
-
-
-};
-
-
-
-//////////////////getting ip
-const iplink="https://ipinfo.io?token=31306b6ed07e9c";
-let ip;
-
-async function getip(){
-let res;
-  await fetch(iplink).then((response) => response.json())
-  .then((jsonResponse) => res={ip:jsonResponse['ip'],loc:jsonResponse['loc']})
-    .catch((e)=> res="unkown")
-return res;
-};
-
-
-
-
-async function  handletrash(){
-  time=Date().toLocaleString();
-  ip=await getip();
-  let pp={ [time]:ip};
-  db.collection("keyData").doc(user).get().then((doc) => {
-    if (doc.exists) {
-      db.collection("keyData").doc(user).update(pp);
-    }
-    else{
-      db.collection("keyData").doc(user).set(pp);
-    }
-  });
-
-
-
-};
-  
-///////////////////////////////////
 
 
 
@@ -361,7 +285,7 @@ First time users enter any key of your own choice and hit <b>get data </b>
  to create a new key. Enter the same key later and hit <b>get data </b> to get the data saved.</p>
   <div className='key_input'> 
   <input style={textfeilds}   autoFocus  type="textbox" placeholder="*Enter key" className="copyLinkInput1"  onChange={(e)=>{setuser(e.target.value);}} onKeyPress={keychange} value={user} />
-
+{/* <button onClick={()=>{getdata()}}>click</button> */}
   <button  style ={{background: "#3c82f6",
 boxshadow:"0px 24px 38px 3px hsla(0,0%,0%,0.14), 0px 9px 46px 8px hsla(0,0%,0%,0.12), 0px 11px 15px -7px hsla(0,0%,0%,0.2)"}
 } onClick={()=>{getlinks(); }}  >Get Data </button>
@@ -369,26 +293,35 @@ boxshadow:"0px 24px 38px 3px hsla(0,0%,0%,0.14), 0px 9px 46px 8px hsla(0,0%,0%,0
 </div>
 
 <div className="copylinks">
-{
 
 
-[...Array(l).keys()].map(n => {
-    let temp="link"+(n+1)
-    return (
-    <div className="copyLinkElement" key={temp}>
+<div className="copyLinkElement" key="link1">
     <label>
-    <input style={textfeilds}    type="textbox" placeholder="enter any text and hit save" className="copyLinkInput"  onChange={e =>   linkchange(temp,e)}  onKeyPress={(e)=>saveHit(temp,e)} value={links[temp]}/>
-    <button style ={isdark? bluebutton: {background: "#5e98f8"}} onClick={()=>{linkupdate(temp);setOpen(true); setmessage("Data Saved !!!")   }} >save link!</button>
-    <button style ={isdark? brownbutton: {background: "#5C6B70"}} onClick={ () => {navigator.clipboard.writeText(links[temp]);setOpen(true); setmessage("copied !!!") }}>copy link!</button>
+    <input style={textfeilds}    type="textbox" placeholder="enter any text and hit save" className="copyLinkInput"  onChange={e =>   linkchange("link1",e)}  onKeyPress={(e)=>saveHit("link1",e)} value={links["link1"]} />
+    <button style ={isdark? bluebutton: {background: "#5e98f8"}} onClick={()=>{linkupdate("link1");setOpen(true); setmessage("Data Saved !!!")   }} >save link!</button>
+    <button style ={isdark? brownbutton: {background: "#5C6B70"}} onClick={ () => {navigator.clipboard.writeText(links["link1"]);setOpen(true); setmessage("copied !!!") }}>copy link!</button>
     </label>
     </div> 
-    )
-})
+
+    <div className="copyLinkElement" key="link2">
+    <label>
+    <input style={textfeilds}    type="textbox" placeholder="enter any text and hit save" className="copyLinkInput"  onChange={e =>   linkchange("link2",e)}  onKeyPress={(e)=>saveHit("link2",e)} value={links["link2"]}/>
+    <button style ={isdark? bluebutton: {background: "#5e98f8"}} onClick={()=>{linkupdate("link2");setOpen(true); setmessage("Data Saved !!!")   }} >save link!</button>
+    <button style ={isdark? brownbutton: {background: "#5C6B70"}} onClick={ () => {navigator.clipboard.writeText(links["link2"]);setOpen(true); setmessage("copied !!!") }}>copy link!</button>
+    </label>
+    </div> 
+
+    <div className="copyLinkElement" key="link3">
+    <label>
+    <input style={textfeilds}    type="textbox" placeholder="enter any text and hit save" className="copyLinkInput"  onChange={e =>   linkchange("link3",e)}  onKeyPress={(e)=>saveHit("link3",e)} value={links["link3"]}/>
+    <button style ={isdark? bluebutton: {background: "#5e98f8"}} onClick={()=>{linkupdate("link3");setOpen(true); setmessage("Data Saved !!!")   }} >save link!</button>
+    <button style ={isdark? brownbutton: {background: "#5C6B70"}} onClick={ () => {navigator.clipboard.writeText(links["link3"]);setOpen(true); setmessage("copied !!!") }}>copy link!</button>
+    </label>
+    </div> 
 
 
 
 
-}
 
 
 
@@ -398,11 +331,10 @@ boxshadow:"0px 24px 38px 3px hsla(0,0%,0%,0.14), 0px 9px 46px 8px hsla(0,0%,0%,0
 
 
 
-<div title="add an link element" className="addelement" style={{ display: (l<8) ? 'block' : 'none' }}>
-<IconButton aria-label="upload picture" component="span" className='add'  onClick={()=>addlink(0)}>
-<AddCircleIcon  style={{ fontSize: "50px",  color:"#3c82f6"}}/>
-</IconButton>
-</div>
+
+
+
+
 </div>
 
 
@@ -413,25 +345,25 @@ boxshadow:"0px 24px 38px 3px hsla(0,0%,0%,0.14), 0px 9px 46px 8px hsla(0,0%,0%,0
 
 <div className="copylinks">
 
-
-
-{
-[...Array(t).keys()].map(n => {
-  let temp="text"+(n+1)
-    return (
-    <div className="copyTextElement" key={temp}>
+<div className="copyTextElement" key="text1">
     
-    <textarea style={textfeilds} placeholder="enter any text and hit save" className="copyTextInput" onChange={(e)=> linkchange(temp,e)}    value={links[temp]}></textarea>
-    <button style ={isdark? bluebutton: {background: "#5e98f8"}} onClick={()=>{linkupdate(temp);setOpen(true); setmessage("Data Saved !!!")   }} >save link!</button>
-    <button style ={isdark? brownbutton: {background: "#5C6B70"}} onClick={ () => {navigator.clipboard.writeText(links[temp]);setOpen(true); setmessage("copied !!!") }}>copy link!</button>
+    <textarea style={textfeilds} placeholder="enter any text and hit save" className="copyTextInput" onChange={(e)=> linkchange("text1",e)}    value={links["text1"]}></textarea>
+    <button style ={isdark? bluebutton: {background: "#5e98f8"}} onClick={()=>{linkupdate("text1");setOpen(true); setmessage("Data Saved !!!")   }} >save link!</button>
+    <button style ={isdark? brownbutton: {background: "#5C6B70"}} onClick={ () => {navigator.clipboard.writeText(links["text1"]);setOpen(true); setmessage("copied !!!") }}>copy link!</button>
    
     </div> 
-    )
-})
+
+
+    <div className="copyTextElement" key="text2">
+    
+    <textarea style={textfeilds} placeholder="enter any text and hit save" className="copyTextInput" onChange={(e)=> linkchange("text2",e)}    value={links["text2"]}></textarea>
+    <button style ={isdark? bluebutton: {background: "#5e98f8"}} onClick={()=>{linkupdate("text2");setOpen(true); setmessage("Data Saved !!!")   }} >save link!</button>
+    <button style ={isdark? brownbutton: {background: "#5C6B70"}} onClick={ () => {navigator.clipboard.writeText(links["text2"]);setOpen(true); setmessage("copied !!!") }}>copy link!</button>
+   
+    </div> 
 
 
 
-}
 
 
 
@@ -439,16 +371,12 @@ boxshadow:"0px 24px 38px 3px hsla(0,0%,0%,0.14), 0px 9px 46px 8px hsla(0,0%,0%,0
 
 
 
-<div title="add an text element" className="addelement" style={{ display: (t<5) ? 'block' : 'none' }} >
-<IconButton aria-label="upload picture" component="span" className='add' onClick={()=>addlink(1)}>
-<AddCircleIcon  style={{ fontSize: "50px"  ,color:"#3c82f6"}}/>
-</IconButton>
+
+
 </div>
-</div>
 
 
 
-{/* <button onClick={handletrash}>ip in con</button> */}
 <Snackbar
         anchorOrigin={{ vertical, horizontal }}
         open={open}
