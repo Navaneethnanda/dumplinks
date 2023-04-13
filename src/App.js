@@ -37,7 +37,7 @@ const [body,setbody]=useState(empty);
 const [torso,settorso]=useState(empty);
 const [visible,setvisible]=useState("none");
 
-const endpoint="https://ypzxlh1387.execute-api.us-east-1.amazonaws.com/dev";
+const endpoint="https://cdzat0b3mc.execute-api.us-east-1.amazonaws.com/dev";
 const bodyD={
 "backgroundColor": "rgba(17, 24, 39, 0.9)",
 "color": "#fff"
