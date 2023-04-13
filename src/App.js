@@ -1,5 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import './App.css';
+import IconButton from '@mui/material/IconButton';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
 import Snackbar from '@mui/material/Snackbar';
 import  dbk  from './hero-pattern-dark.webp';
 import  lbk  from './hero-pattern.webp';
@@ -33,6 +35,9 @@ const [toggle, settoggle] =useState(false);
 const [theme, settheme]=useState("Dark");
 const [body,setbody]=useState(empty);
 const [torso,settorso]=useState(empty);
+const [visible,setvisible]=useState("none");
+
+const endpoint="https://ypzxlh1387.execute-api.us-east-1.amazonaws.com/dev";
 const bodyD={
 "backgroundColor": "rgba(17, 24, 39, 0.9)",
 "color": "#fff"
@@ -107,11 +112,11 @@ function isEmpty(ob){
 const getdata = async () => {
   try {
     const sendData={
-      "type":"get",
+      "type":"read",
       "key":user
   }
     let response = await axios({'method':'POST',
-    'url':"https://c13xazudu6.execute-api.us-east-1.amazonaws.com/settext",
+    'url':endpoint,
     'data':sendData,
     })
     response=await response.data.data;
@@ -179,11 +184,11 @@ const keychange=(e)=> {
 const setdata = async () => {
   try {
     const sendData={...links};
-    sendData["type"]="POST";
-    sendData["user"]=currentUser;
+    sendData["type"]="write";
+    sendData["key"]=currentUser;
     console.log(sendData)
     let response = await axios({'method':'POST',
-    'url':"https://c13xazudu6.execute-api.us-east-1.amazonaws.com/settext",
+    'url':endpoint,
     'data':sendData,
     });
     console.log(response)
@@ -316,17 +321,13 @@ boxshadow:"0px 24px 38px 3px hsla(0,0%,0%,0.14), 0px 9px 46px 8px hsla(0,0%,0%,0
     </label>
     </div> 
 
-
-
-
-
-
-
-
-
-
-
-
+    <div className="copyLinkElement" style={{ display: visible}}>
+    <label>
+    <input style={textfeilds}    type="textbox" placeholder="enter any text and hit save" className="copyLinkInput"  onChange={e =>   linkchange("link3",e)}  onKeyPress={(e)=>saveHit("link3",e)} value={links["link3"]}/>
+    <button style ={isdark? bluebutton: {background: "#5e98f8"}} onClick={()=>{linkupdate("link3");setOpen(true); setmessage("Data Saved !!!")   }} >save link!</button>
+    <button style ={isdark? brownbutton: {background: "#5C6B70"}} onClick={ () => {navigator.clipboard.writeText(links["link3"]);setOpen(true); setmessage("copied !!!") }}>copy link!</button>
+    </label>
+    </div> 
 
 
 
@@ -334,6 +335,11 @@ boxshadow:"0px 24px 38px 3px hsla(0,0%,0%,0.14), 0px 9px 46px 8px hsla(0,0%,0%,0
 
 </div>
 
+<div title="add an link element" className="addelement" >
+<IconButton aria-label="upload picture" component="span" className='add'  onClick={()=>setvisible("block")}>
+<AddCircleIcon  style={{ fontSize: "50px",  color:"#3c82f6"}}/>
+</IconButton>
+</div>
 
 
 
@@ -370,6 +376,12 @@ boxshadow:"0px 24px 38px 3px hsla(0,0%,0%,0.14), 0px 9px 46px 8px hsla(0,0%,0%,0
 
 
 
+</div>
+
+<div title="add an link element" className="addelement" >
+<IconButton aria-label="upload picture" component="span" className='add'  onClick={()=>setvisible("block")}>
+<AddCircleIcon  style={{ fontSize: "50px",  color:"#3c82f6"}}/>
+</IconButton>
 </div>
 
 
